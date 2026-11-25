@@ -12,7 +12,7 @@ namespace BrowserPicker.UI;
 /// <see cref="WindowStartupLocation.CenterScreen"/> uses the monitor under the mouse, so mixing them
 /// shows the window on one monitor and then moves it to another.
 /// </summary>
-internal static class WindowPlacement
+internal static partial class WindowPlacement
 {
 	/// <summary>Windows that have been rendered at least once; later re-centering follows the window's own monitor.</summary>
 	private static readonly ConditionalWeakTable<Window, object> rendered_windows = new();
@@ -120,20 +120,20 @@ internal static class WindowPlacement
 		public uint dwFlags;
 	}
 
-	[DllImport("user32.dll")]
+	[LibraryImport("user32.dll")]
 	[return: MarshalAs(UnmanagedType.Bool)]
-	private static extern bool GetCursorPos(out POINT point);
+	private static partial bool GetCursorPos(out POINT point);
 
-	[DllImport("user32.dll")]
-	private static extern IntPtr MonitorFromPoint(POINT point, uint flags);
+	[LibraryImport("user32.dll")]
+	private static partial IntPtr MonitorFromPoint(POINT point, uint flags);
 
-	[DllImport("user32.dll")]
-	private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+	[LibraryImport("user32.dll")]
+	private static partial IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
 
-	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+	[LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
 	[return: MarshalAs(UnmanagedType.Bool)]
-	private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+	private static partial bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
 
-	[DllImport("user32.dll")]
-	private static extern uint GetDpiForSystem();
+	[LibraryImport("user32.dll")]
+	private static partial uint GetDpiForSystem();
 }
