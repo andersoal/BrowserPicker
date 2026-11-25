@@ -615,6 +615,19 @@
 							<CheckBox Content="Include DNS CAA and certificate transparency evidence" IsChecked="{Binding Settings.CheckCertificateRecords}" ToolTip="Used only when you click Check connection. CAA requires a DNS lookup; CT checks embedded certificate transparency evidence." />
 							<CheckBox Content="Look up certificate history (crt.sh)" IsChecked="{Binding Settings.LookupCertificateHistory}" ToolTip="Used only when you click Check connection. Sends the host name (for example www.example.com), not the full URL, to crt.sh, a public certificate transparency search run by Sectigo." />
 							<CheckBox Content="Look up domain registration (RDAP)" IsChecked="{Binding Settings.LookupDomainRegistration}" ToolTip="Used only when you click Check connection. Sends the domain (for example example.com), not the full URL, to the registry's RDAP service listed by IANA." />
+							<CheckBox Content="Look up the host on URLhaus (abuse.ch)" IsChecked="{Binding Settings.LookupUrlReputation}" ToolTip="Used only when you click Check connection. Sends the host name (for example www.example.com) and your own abuse.ch Auth-Key to URLhaus, which tracks sites that distribute malware." />
+							<StackPanel Margin="20,0,0,8">
+								<StackPanel Orientation="Horizontal">
+									<TextBlock VerticalAlignment="Center" Text="Auth-Key: " />
+									<TextBox Width="220" Text="{Binding UrlhausKeyInput, UpdateSourceTrigger=PropertyChanged}" ToolTip="Paste your abuse.ch Auth-Key. It is stored in Windows Credential Manager, not in the settings file." />
+									<Button Margin="4,0,0,0" Command="{Binding SaveUrlhausKey}" Content="Save" />
+									<Button Margin="4,0,0,0" Command="{Binding RemoveUrlhausKey}" Content="Remove" />
+								</StackPanel>
+								<TextBlock Margin="0,4,0,0" TextWrapping="Wrap">
+									<Run Text="{Binding UrlhausKeyStatus, Mode=OneWay}" />
+									<Hyperlink NavigateUri="https://auth.abuse.ch/" RequestNavigate="OnRequestNavigate">auth.abuse.ch</Hyperlink>
+								</TextBlock>
+							</StackPanel>
 							<CheckBox Content="Hide connection check button" IsChecked="{Binding Settings.HideManualConnectionCheck}" ToolTip="Removes the padlock connection check action from the picker." />
 							<CheckBox Content="Skip confirmation prompt" IsChecked="{Binding Settings.SkipConnectionCheckConfirmation}" ToolTip="Starts the connection check immediately when you click the padlock." />
 						</StackPanel>
