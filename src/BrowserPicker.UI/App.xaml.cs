@@ -448,9 +448,16 @@ public partial class App
 	/// </summary>
 	private static async void StartShutdownWatchdog()
 	{
-		// ConfigureAwait(false): the dispatcher is shut down by then, so resuming on it would never run.
-		await Task.Delay(ShutdownWatchdogTimeout).ConfigureAwait(false);
-		Environment.Exit(0);
+		try
+		{
+			// ConfigureAwait(false): the dispatcher is shut down by then, so resuming on it would never run.
+			await Task.Delay(ShutdownWatchdogTimeout).ConfigureAwait(false);
+			Environment.Exit(0);
+		}
+		catch
+		{
+			// ignored: an exception escaping an async void method would crash the process
+		}
 	}
 
 	public ApplicationViewModel? ViewModel { get; }
