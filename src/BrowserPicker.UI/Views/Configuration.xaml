@@ -613,6 +613,7 @@
 
 							<TextBlock Margin="0,8,0,6" FontWeight="Bold" Text="Manual probes" />
 							<CheckBox Content="Include DNS CAA and certificate transparency evidence" IsChecked="{Binding Settings.CheckCertificateRecords}" ToolTip="Used only when you click Check connection. CAA requires a DNS lookup; CT checks embedded certificate transparency evidence." />
+							<CheckBox Content="Look up certificate history (crt.sh)" IsChecked="{Binding Settings.LookupCertificateHistory}" ToolTip="Used only when you click Check connection. Sends the host name (for example www.example.com), not the full URL, to crt.sh, a public certificate transparency search run by Sectigo." />
 							<CheckBox Content="Look up domain registration (RDAP)" IsChecked="{Binding Settings.LookupDomainRegistration}" ToolTip="Used only when you click Check connection. Sends the domain (for example example.com), not the full URL, to the registry's RDAP service listed by IANA." />
 							<CheckBox Content="Hide connection check button" IsChecked="{Binding Settings.HideManualConnectionCheck}" ToolTip="Removes the padlock connection check action from the picker." />
 							<CheckBox Content="Skip confirmation prompt" IsChecked="{Binding Settings.SkipConnectionCheckConfirmation}" ToolTip="Starts the connection check immediately when you click the padlock." />
