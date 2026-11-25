@@ -109,40 +109,12 @@ public sealed class FeedbackViewModel : ModelBase
 	}
 
 	public ICommand OpenDiagnosticLogFolder =>
-		open_diagnostic_log_folder ??= new DelegateCommand(() =>
-		{
-			try
-			{
-				System.IO.Directory.CreateDirectory(DiagnosticLogDirectory);
-			}
-			catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException)
-			{
-				SetDiagnosticLogMessage($"Could not create the log folder: {e.Message}");
-				return;
-			}
-			StartShell(DiagnosticLogDirectory);
-		});
+		open_diagnostic_log_folder ??= new DelegateCommand(ShowDiagnosticLogFolder);
 
 	public ICommand OpenLatestDiagnosticLog =>
-		open_latest_diagnostic_log ??= new DelegateCommand(() =>
-		{
-			var latest = diagnostic_file_log?.GetLogFiles().FirstOrDefault();
-			if (latest == null)
-			{
-				SetDiagnosticLogMessage("No log file yet.");
-				return;
-			}
-			StartShell(latest.FullName);
-		});
+		open_latest_diagnostic_log ??= new DelegateCommand(ShowLatestDiagnosticLog);
 
-	public ICommand DeleteDiagnosticLogs =>
-		delete_diagnostic_logs ??= new DelegateCommand(() =>
-		{
-			var failed = diagnostic_file_log?.DeleteAllFiles() ?? 0;
-			SetDiagnosticLogMessage(
-				failed == 0 ? "Log files deleted." : $"{failed} file(s) are in use and could not be deleted."
-			);
-		});
+	public ICommand DeleteDiagnosticLogs => delete_diagnostic_logs ??= new DelegateCommand(DeleteDiagnosticLogFiles);
 
 	public ICommand CopyFeedbackMarkdown =>
 		copy_feedback_markdown ??= new DelegateCommand(CopyFeedbackMarkdownToClipboard);
@@ -678,6 +650,39 @@ public sealed class FeedbackViewModel : ModelBase
 		{
 			SetDiagnosticLogMessage(string.Empty);
 		}
+	}
+
+	private void ShowDiagnosticLogFolder()
+	{
+		try
+		{
+			System.IO.Directory.CreateDirectory(DiagnosticLogDirectory);
+		}
+		catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException)
+		{
+			SetDiagnosticLogMessage($"Could not create the log folder: {e.Message}");
+			return;
+		}
+		StartShell(DiagnosticLogDirectory);
+	}
+
+	private void ShowLatestDiagnosticLog()
+	{
+		var latest = diagnostic_file_log?.GetLogFiles().FirstOrDefault();
+		if (latest == null)
+		{
+			SetDiagnosticLogMessage("No log file yet.");
+			return;
+		}
+		StartShell(latest.FullName);
+	}
+
+	private void DeleteDiagnosticLogFiles()
+	{
+		var failed = diagnostic_file_log?.DeleteAllFiles() ?? 0;
+		SetDiagnosticLogMessage(
+			failed == 0 ? "Log files deleted." : $"{failed} file(s) are in use and could not be deleted."
+		);
 	}
 
 	private void SetDiagnosticLogMessage(string message)
