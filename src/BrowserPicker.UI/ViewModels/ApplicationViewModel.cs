@@ -565,7 +565,8 @@ public sealed class ApplicationViewModel : ModelBase
 			viewModel = new ConnectionCheckViewModel(
 				uri,
 				Configuration.Settings.CheckCertificateRecords,
-				Configuration.Settings.SkipConnectionCheckConfirmation
+				Configuration.Settings.SkipConnectionCheckConfirmation,
+				GetExternalLookups()
 			);
 		}
 
@@ -575,6 +576,19 @@ public sealed class ApplicationViewModel : ModelBase
 		{
 			ConnectionCheckState = viewModel.ResultState;
 		}
+	}
+
+	/// <summary>
+	/// The opt-in third-party lookups that run with a manual connection check.
+	/// </summary>
+	private List<IExternalLookup> GetExternalLookups()
+	{
+		var lookups = new List<IExternalLookup>();
+		if (Configuration.Settings.LookupDomainRegistration)
+		{
+			lookups.Add(RdapDomainLookup.Shared);
+		}
+		return lookups;
 	}
 
 	/// <summary>

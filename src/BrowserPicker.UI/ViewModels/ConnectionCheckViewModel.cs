@@ -27,6 +27,7 @@ public sealed class ConnectionCheckViewModel : ModelBase
 	private readonly Uri? uri;
 	private readonly bool include_certificate_records;
 	private readonly bool skip_confirmation;
+	private readonly IReadOnlyList<IExternalLookup> lookups = [];
 	private CancellationTokenSource? cancellation;
 	private string status = "Ready";
 	private string? reportText;
@@ -45,15 +46,25 @@ public sealed class ConnectionCheckViewModel : ModelBase
 		) { }
 #endif
 
-	public ConnectionCheckViewModel(Uri uri, bool includeCertificateRecords, bool skipConfirmation)
+	public ConnectionCheckViewModel(
+		Uri uri,
+		bool includeCertificateRecords,
+		bool skipConfirmation,
+		IReadOnlyList<IExternalLookup>? externalLookups = null
+	)
 	{
 		this.uri = uri;
 		include_certificate_records = includeCertificateRecords;
 		skip_confirmation = skipConfirmation;
+		lookups = externalLookups ?? [];
 		can_start = true;
-		ConfirmText = includeCertificateRecords
+		var connectionText = includeCertificateRecords
 			? $"Checking the TLS certificate will contact the target host ({uri.Host}) and may query DNS for CAA records. The website, DNS resolver, and network proxies may see this activity."
 			: $"Checking the TLS certificate will contact only the target host ({uri.Host}). The website and network proxies may see this connection.";
+		ConfirmText = string.Join(
+			" ",
+			lookups.Select(lookup => lookup.DescribeRequest(uri)).Where(text => text != null).Prepend(connectionText)
+		);
 	}
 
 	public ConnectionCheckViewModel(string unavailableReason)
@@ -178,13 +189,39 @@ public sealed class ConnectionCheckViewModel : ModelBase
 
 		try
 		{
-			var summary = await TlsCertificateSummary.InspectAsync(
-				uri,
-				include_certificate_records,
-				cancellation.Token
-			);
-			Status = "Connection check complete";
-			SetSummary(summary);
+			try
+			{
+				var summary = await TlsCertificateSummary.InspectAsync(
+					uri,
+					include_certificate_records,
+					cancellation.Token
+				);
+				Status = "Connection check complete";
+				SetSummary(summary);
+			}
+			catch (OperationCanceledException) when (!cancellation.Token.IsCancellationRequested)
+			{
+				// Timed out rather than canceled by the user: still run the lookups.
+				Status = "Connection check canceled";
+				ReportText = "The connection check was canceled or timed out.";
+				ResultState = ConnectionCheckIndicatorState.NotScanned;
+			}
+			catch (SocketException ex)
+			{
+				Status = "Connection check failed";
+				ReportText = $"The connection check failed: {ex.Message}";
+				ResultState = IsDnsResolutionFailure(ex)
+					? ConnectionCheckIndicatorState.Unresolved
+					: ConnectionCheckIndicatorState.Error;
+			}
+			catch (Exception ex) when (ex is AuthenticationException or IOException or InvalidOperationException)
+			{
+				Status = "Connection check failed";
+				ReportText = $"The connection check failed: {ex.Message}";
+				ResultState = ConnectionCheckIndicatorState.Error;
+			}
+
+			await RunExternalLookupsAsync(uri, cancellation.Token);
 		}
 		catch (OperationCanceledException)
 		{
@@ -192,26 +229,56 @@ public sealed class ConnectionCheckViewModel : ModelBase
 			ReportText = "The connection check was canceled or timed out.";
 			ResultState = ConnectionCheckIndicatorState.NotScanned;
 		}
-		catch (SocketException ex)
-		{
-			Status = "Connection check failed";
-			ReportText = $"The connection check failed: {ex.Message}";
-			ResultState = IsDnsResolutionFailure(ex)
-				? ConnectionCheckIndicatorState.Unresolved
-				: ConnectionCheckIndicatorState.Error;
-		}
-		catch (Exception ex) when (ex is AuthenticationException or IOException or InvalidOperationException)
-		{
-			Status = "Connection check failed";
-			ReportText = $"The connection check failed: {ex.Message}";
-			ResultState = ConnectionCheckIndicatorState.Error;
-		}
 		finally
 		{
 			cancellation?.Dispose();
 			cancellation = null;
 			IsRunning = false;
 		}
+	}
+
+	/// <summary>
+	/// Adds one section per opt-in external lookup. Their results never change <see cref="ResultState"/>:
+	/// a lookup that fails or finds nothing is not a sign that the connection is unsafe.
+	/// </summary>
+	private async Task RunExternalLookupsAsync(Uri target, CancellationToken cancellationToken)
+	{
+		if (lookups.Count == 0)
+		{
+			return;
+		}
+
+		var connectionStatus = Status;
+		Status = "Looking up domain information...";
+		var results = await Task.WhenAll(lookups.Select(lookup => lookup.LookupAsync(target, cancellationToken)));
+		Status = connectionStatus;
+
+		if (!HasSummary)
+		{
+			// The TLS check failed, so there is no overview yet; keep its error next to the lookup results.
+			AddSection(
+				"Overview",
+				string.Empty,
+				[
+					new ConnectionCheckDetailViewModel("Target", target.ToString()),
+					new ConnectionCheckDetailViewModel("Connection", ReportText),
+				]
+			);
+			ReportText = null;
+		}
+
+		foreach (var result in results)
+		{
+			AddSection(
+				result.Title,
+				result.Summary,
+				result.Details.Select(detail => new ConnectionCheckDetailViewModel(detail.Key, detail.Value))
+			);
+		}
+
+		HasSummary = true;
+		OnPropertyChanged(nameof(OverviewSection));
+		OnPropertyChanged(nameof(CollapsibleSections));
 	}
 
 	private void CancelCheck()
