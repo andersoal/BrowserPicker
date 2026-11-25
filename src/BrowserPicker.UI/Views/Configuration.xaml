@@ -215,27 +215,42 @@
 					</Style>
 				</TabItem.Style>
 				<ScrollViewer Padding="4" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-					<TextBlock
-						Margin="4"
-						HorizontalAlignment="Center"
-						VerticalAlignment="Center"
-						FontSize="16"
-						FontWeight="Light"
-						TextWrapping="Wrap">
-						Welcome to Browser Picker, hope you enjoy my little app!<LineBreak />
-						I've gone ahead and opened up the settings window,<LineBreak />
-						so you can have a look around before you get started :)<LineBreak />
-						<LineBreak />
-						Please give it a ⭐ on GitHub, so you will get notified when a new release is made.<LineBreak />
-						<LineBreak />
-						Should you run into any kind of trouble or get an idea,<LineBreak />
-						please visit<Hyperlink>github.com/mortenn/BrowserPicker</Hyperlink>
-						and file an issue!<LineBreak />
-						<LineBreak />
-						Be seeing you!<LineBreak />
-						<LineBreak />
-						<Run FontSize="8">This message will self-destruct in 10 seconds</Run>
-					</TextBlock>
+					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+						<TextBlock
+							Margin="4"
+							HorizontalAlignment="Center"
+							FontSize="16"
+							FontWeight="Light"
+							TextWrapping="Wrap">
+							Welcome to Browser Picker, hope you enjoy my little app!<LineBreak />
+							I've gone ahead and opened up the settings window,<LineBreak />
+							so you can have a look around before you get started :)<LineBreak />
+							<LineBreak />
+							Please give it a ⭐ on GitHub, so you will get notified when a new release is made.<LineBreak />
+							<LineBreak />
+							Should you run into any kind of trouble or get an idea,<LineBreak />
+							please visit<Hyperlink>github.com/mortenn/BrowserPicker</Hyperlink>
+							and file an issue!<LineBreak />
+							<LineBreak />
+							Be seeing you!<LineBreak />
+							<LineBreak />
+							<Run FontSize="8">This message will self-destruct in 10 seconds</Run>
+						</TextBlock>
+						<StackPanel Margin="4,12,4,4" HorizontalAlignment="Center">
+							<StackPanel.Style>
+								<Style TargetType="StackPanel">
+									<Setter Property="Visibility" Value="Visible" />
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding IsDefaultBrowser}" Value="True">
+											<Setter Property="Visibility" Value="Collapsed" />
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</StackPanel.Style>
+							<TextBlock Margin="0,0,0,6" HorizontalAlignment="Center" Text="{Binding DefaultBrowserStatusText}" TextWrapping="Wrap" />
+							<Button Padding="10,4" HorizontalAlignment="Center" Command="{Binding OpenDefaultApps}" Content="Make Browser Picker your default browser" />
+						</StackPanel>
+					</StackPanel>
 				</ScrollViewer>
 			</TabItem>
 
@@ -522,7 +537,17 @@
 								</StackPanel>
 							</StackPanel>
 
-							<StackPanel>
+							<TextBlock Margin="0,16,0,6" FontWeight="Bold" Text="Windows integration" />
+							<TextBlock Margin="0,0,0,6" Text="{Binding DefaultBrowserStatusText}" TextWrapping="Wrap" />
+							<Button
+								Margin="0,0,0,6"
+								Padding="10,4"
+								HorizontalAlignment="Left"
+								Command="{Binding OpenDefaultApps}"
+								Content="Open Windows Default apps"
+								ToolTip="Windows does not let apps make themselves the default browser. This opens Browser Picker's page in Windows Settings, where you can choose it for web links." />
+
+							<StackPanel Margin="0,6,0,0">
 								<StackPanel.Style>
 									<Style TargetType="StackPanel">
 										<Setter Property="Visibility" Value="Visible" />
@@ -533,7 +558,6 @@
 										</Style.Triggers>
 									</Style>
 								</StackPanel.Style>
-								<TextBlock Margin="0,16,0,6" FontWeight="Bold" Text="Windows integration" />
 								<TextBlock Margin="0,0,0,6" Text="{Binding BrowserRegistrationDescription}" TextWrapping="Wrap" />
 								<Button
 									Margin="0,0,0,6"
